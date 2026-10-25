@@ -1,29 +1,83 @@
-# TT_GREB_Reproduce
-复现 TT-GREB 论文实验
-# 项目简介
-本仓库复现 TT-GREB 论文实验，包含 5 个图数据集（Cora、Amazon-Photo、OGB-Arxiv、Twitch-E、Elliptic）的加载与校验脚本。
-# 环境要求
-- Python 3.9+
-- PyTorch 2.6
-- PyTorch Geometric 2.6.1
-- ogb、numpy
-# 安装
-pip install torch torch_geometric ogb numpy
-# 目录结构
-TT_GREB_Reproduce/
-├── datasets/
-│   └── data/
-│       ├── Amazon/
-│       ├── Cora/
-│       ├── Elliptic/
-│       ├── OGB/
-│       └── Twitch/
-├── main.py
-└── README.md
-# 使用方法
-运行主程序：python main.py
-# 常见问题
-PyTorch 2.6 加载缓存报错 ：需在任何 torch.load 之前调用torch.serialization.add_safe_globals([...]) 注册安全全局类。
-路径解析错误 ：不要混用绝对路径和裸相对路径，建议统一基于脚本位置
-拼出数据根目录。
+# TT-GREB reproduction scaffold
 
+This directory contains the first reproducible experiment loop for **Test-Time
+Graph Rebirth (TT-GREB)**:
+
+```text
+Cora split (1 train / 1 validation / 8 test graphs)
+  -> train GCN
+  -> select the best validation checkpoint
+  -> freeze the GCN
+  -> ERM on the original test graphs
+  -> TT-GREB on the same test graphs
+  -> compare mean Accuracy
+```
+
+The repository currently contains the standard Planetoid Cora raw files, not the
+paper's processed `1/1/8` split. Therefore `--smoke-standard-cora` is only a
+pipeline smoke test; it must not be reported as the paper result. For a paper
+run, provide a `.pt` split file with this structure:
+
+```python
+{
+    "train": torch_geometric.data.Data,
+    "valid": torch_geometric.data.Data,
+    "test": [torch_geometric.data.Data, ...],  # exactly 8 graphs for Cora
+}
+```
+
+Each graph must have `x`, `edge_index`, and `y`. The loader checks graph indices,
+feature dimensions, class ranges, and the expected `1/1/8` count.
+
+## Environment
+
+Use Python 3.10 or 3.11 for the PyTorch 2.6 stack:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install torch==2.6.0 torch_geometric==2.6.1 ogb numpy
+```
+
+## Run the smoke loop
+
+From the workspace root:
+
+```powershell
+python TT_GREB_Reproduce/run_cora_gcn.py `
+  --smoke-standard-cora `
+  --output TT_GREB_Reproduce/results/cora_gcn_seed0_smoke
+```
+
+The command writes the checkpoint, per-test-graph scores, configuration, and a
+summary JSON. It exercises the complete code path but does not reproduce the
+paper's Cora numbers.
+
+The included adaptation loop is an implementation scaffold for the prototype
+and environment reweighting modules. Its current cosine-similarity objective is
+a runnable surrogate, not a verified transcription of every term in the paper's
+dual contrastive objective. Do not report its scores as a faithful TT-GREB
+reproduction until the objective, optimizer schedule, and hyperparameters have
+been checked against the final ICDM paper or official implementation.
+
+## Run the paper split
+
+```powershell
+python TT_GREB_Reproduce/run_cora_gcn.py `
+  --split TT_GREB_Reproduce/data/cora_1_1_8.pt `
+  --output TT_GREB_Reproduce/results/cora_gcn_seed0
+```
+
+The current GitHub data directory does not contain `cora_1_1_8.pt`; this file
+must come from the authors' preprocessing or be generated from the exact split
+protocol before claiming a paper reproduction.
+
+For a local smoke artifact and its validation:
+
+```powershell
+python TT_GREB_Reproduce/prepare_standard_cora_smoke.py `
+  --output TT_GREB_Reproduce/data/cora_standard_smoke.pt
+python TT_GREB_Reproduce/inspect_split.py `
+  TT_GREB_Reproduce/data/cora_standard_smoke.pt
+```

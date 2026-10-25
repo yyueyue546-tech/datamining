@@ -1,5 +1,6 @@
-data/**/*.csv
-data/**/*.pt
-data/**/*.zip
-data/**/*.gz
-.idea/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/processed/
+data/Cora/
+results/
