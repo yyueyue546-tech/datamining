@@ -124,10 +124,17 @@ def load_masked_cora(processed_file: str | Path) -> Data:
     processed_file = Path(processed_file)
     if processed_file.name != "data.pt":
         raise ValueError("--processed-cora must point to a processed Planetoid data.pt file")
-    root = processed_file.parent.parent.parent
     register_torch26_safe_globals()
-    dataset = Planetoid(root=str(root), name="Cora")
-    graph = dataset[0].cpu()
+    # Read the explicitly supplied local cache; Planetoid appends its own
+    # directory layout and can otherwise download a different cache.
+    payload = torch.load(processed_file, map_location="cpu", weights_only=False)
+    if not isinstance(payload, tuple) or len(payload) not in (2, 3):
+        raise ValueError("expected a processed PyG (data, slices[, data_class]) cache")
+    stored, slices = payload[:2]
+    if slices is not None:
+        raise ValueError("expected a single Cora graph, not a collated multi-graph cache")
+    graph = Data.from_dict(stored) if isinstance(stored, dict) else _as_graph(stored, "Cora")
+    graph = graph.cpu()
     for field in ("train_mask", "val_mask", "test_mask"):
         mask = getattr(graph, field, None)
         if mask is None or mask.dtype != torch.bool or mask.numel() != graph.num_nodes:

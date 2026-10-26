@@ -1,0 +1,22 @@
+[
+  {
+    "run": "cora_masked_gcn_seed0",
+    "validation_accuracy": 0.7900000214576721,
+    "erm_accuracy": 0.7960000038146973
+  },
+  {
+    "run": "cora_masked_gcn_seed0_repeat",
+    "validation_accuracy": 0.7900000214576721,
+    "erm_accuracy": 0.7960000038146973
+  },
+  {
+    "run": "cora_masked_gcn_seed0_200_20",
+    "validation_accuracy": 0.7900000214576721,
+    "erm_accuracy": 0.7960000038146973
+  },
+  {
+    "run": "cora_masked_gcn_seed0_200_20_repeat",
+    "validation_accuracy": 0.7900000214576721,
+    "erm_accuracy": 0.7960000038146973
+  }
+]
