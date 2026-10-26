@@ -1,0 +1,212 @@
+{
+  "python": "3.11.17",
+  "torch": "2.14.1+cpu",
+  "pyg": "2.6.1",
+  "cache": "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+  "cache_sha256": "7a512c5473d55633886b2c3c31aae3350990a9307fabc37c1b4882a2df5afbbb",
+  "nodes": 2708,
+  "features": 1433,
+  "edge_entries": 10556,
+  "classes": 7,
+  "masks": [
+    140,
+    500,
+    1000
+  ],
+  "runs": [
+    {
+      "name": "cora_masked_gcn_seed0",
+      "seconds": 45.425914700026624,
+      "command": [
+        "C:\\Anaconda\\envs\\ttgreb\\python.exe",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\run_cora_gcn.py",
+        "--processed-cora",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "--epochs",
+        "50",
+        "--adapt-steps",
+        "5",
+        "--seed",
+        "0",
+        "--device",
+        "cpu",
+        "--output",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\results\\cora_masked_gcn_seed0"
+      ],
+      "summary": {
+        "seed": 0,
+        "source": "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "paper_split_verified": false,
+        "train_graphs": 1,
+        "valid_graphs": 1,
+        "test_graphs": 1,
+        "evaluation_protocol": "node_masks",
+        "validation_accuracy": 0.7900000214576721,
+        "erm_accuracy": [
+          0.7960000038146973
+        ],
+        "tt_greb_accuracy": [
+          0.7919999957084656
+        ],
+        "erm_mean_accuracy": 0.7960000038146973,
+        "tt_greb_mean_accuracy": 0.7919999957084656,
+        "adaptation": [
+          {
+            "steps": 5,
+            "final_loss": -0.02702844887971878
+          }
+        ]
+      }
+    },
+    {
+      "name": "cora_masked_gcn_seed0_repeat",
+      "seconds": 44.36552730004769,
+      "command": [
+        "C:\\Anaconda\\envs\\ttgreb\\python.exe",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\run_cora_gcn.py",
+        "--processed-cora",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "--epochs",
+        "50",
+        "--adapt-steps",
+        "5",
+        "--seed",
+        "0",
+        "--device",
+        "cpu",
+        "--output",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\results\\cora_masked_gcn_seed0_repeat"
+      ],
+      "summary": {
+        "seed": 0,
+        "source": "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "paper_split_verified": false,
+        "train_graphs": 1,
+        "valid_graphs": 1,
+        "test_graphs": 1,
+        "evaluation_protocol": "node_masks",
+        "validation_accuracy": 0.7900000214576721,
+        "erm_accuracy": [
+          0.7960000038146973
+        ],
+        "tt_greb_accuracy": [
+          0.7919999957084656
+        ],
+        "erm_mean_accuracy": 0.7960000038146973,
+        "tt_greb_mean_accuracy": 0.7919999957084656,
+        "adaptation": [
+          {
+            "steps": 5,
+            "final_loss": -0.02702844887971878
+          }
+        ]
+      }
+    },
+    {
+      "name": "cora_masked_gcn_seed0_200_20",
+      "seconds": 166.62802060006652,
+      "command": [
+        "C:\\Anaconda\\envs\\ttgreb\\python.exe",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\run_cora_gcn.py",
+        "--processed-cora",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "--epochs",
+        "200",
+        "--adapt-steps",
+        "20",
+        "--seed",
+        "0",
+        "--device",
+        "cpu",
+        "--output",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\results\\cora_masked_gcn_seed0_200_20"
+      ],
+      "summary": {
+        "seed": 0,
+        "source": "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "paper_split_verified": false,
+        "train_graphs": 1,
+        "valid_graphs": 1,
+        "test_graphs": 1,
+        "evaluation_protocol": "node_masks",
+        "validation_accuracy": 0.7900000214576721,
+        "erm_accuracy": [
+          0.7960000038146973
+        ],
+        "tt_greb_accuracy": [
+          0.7979999780654907
+        ],
+        "erm_mean_accuracy": 0.7960000038146973,
+        "tt_greb_mean_accuracy": 0.7979999780654907,
+        "adaptation": [
+          {
+            "steps": 20,
+            "final_loss": -0.0494694821536541
+          }
+        ]
+      }
+    },
+    {
+      "name": "cora_masked_gcn_seed0_200_20_repeat",
+      "seconds": 209.4674996000249,
+      "command": [
+        "C:\\Anaconda\\envs\\ttgreb\\python.exe",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\run_cora_gcn.py",
+        "--processed-cora",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "--epochs",
+        "200",
+        "--adapt-steps",
+        "20",
+        "--seed",
+        "0",
+        "--device",
+        "cpu",
+        "--output",
+        "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\TT_GREB_Reproduce\\results\\cora_masked_gcn_seed0_200_20_repeat"
+      ],
+      "summary": {
+        "seed": 0,
+        "source": "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+        "paper_split_verified": false,
+        "train_graphs": 1,
+        "valid_graphs": 1,
+        "test_graphs": 1,
+        "evaluation_protocol": "node_masks",
+        "validation_accuracy": 0.7900000214576721,
+        "erm_accuracy": [
+          0.7960000038146973
+        ],
+        "tt_greb_accuracy": [
+          0.7979999780654907
+        ],
+        "erm_mean_accuracy": 0.7960000038146973,
+        "tt_greb_mean_accuracy": 0.7979999780654907,
+        "adaptation": [
+          {
+            "steps": 20,
+            "final_loss": -0.0494694821536541
+          }
+        ]
+      }
+    }
+  ],
+  "repeat_checks": [
+    {
+      "runs": [
+        "cora_masked_gcn_seed0",
+        "cora_masked_gcn_seed0_repeat"
+      ],
+      "identical_summary": true,
+      "identical_checkpoint_tensors": true
+    },
+    {
+      "runs": [
+        "cora_masked_gcn_seed0_200_20",
+        "cora_masked_gcn_seed0_200_20_repeat"
+      ],
+      "identical_summary": true,
+      "identical_checkpoint_tensors": true
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+C:\Anaconda\envs\ttgreb\Lib\site-packages\torch\jit\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+{
+  "seed": 0,
+  "source": "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+  "paper_split_verified": false,
+  "train_graphs": 1,
+  "valid_graphs": 1,
+  "test_graphs": 1,
+  "evaluation_protocol": "node_masks",
+  "validation_accuracy": 0.7900000214576721,
+  "erm_accuracy": [
+    0.7960000038146973
+  ],
+  "tt_greb_accuracy": [
+    0.7979999780654907
+  ],
+  "erm_mean_accuracy": 0.7960000038146973,
+  "tt_greb_mean_accuracy": 0.7979999780654907,
+  "adaptation": [
+    {
+      "steps": 20,
+      "final_loss": -0.0494694821536541
+    }
+  ]
+}

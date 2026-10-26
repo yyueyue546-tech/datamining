@@ -1,5 +1,7 @@
 # TT-GREB 复现启动说明
 
+> Windows 本次实测记录见 `REPRODUCTION_FEISHU.md`。本机保留 Python 3.11.17 / PyTorch 2.14.1+cpu，安装 PyG 2.6.1 和 SciPy；没有执行下文会降级 PyTorch 的通用 requirements 安装命令。实测环境快照见 `requirements.windows-validated.txt`。本机数据路径为 `datamining/data/Cora/processed/data.pt`（相对于外层工作区）；运行代码已修复为直接读取指定缓存。
+
 这份文件用于把当前代码交给另一台电脑、服务器或云环境运行。GitHub 只保存代码，不会自动执行实验；实验必须在安装了 Python、PyTorch 和 PyTorch Geometric 的运行环境中执行。
 
 ## 当前阶段是什么
