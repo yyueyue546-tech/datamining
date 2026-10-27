@@ -1,0 +1,13 @@
+{
+  "seed": 0,
+  "epochs": 200,
+  "hidden_dim": 64,
+  "learning_rate": 0.01,
+  "weight_decay": 0.0005,
+  "adapt_steps": 20,
+  "device": "cpu",
+  "torch_version": "2.14.1+cpu",
+  "python_version": "3.11.17",
+  "source": "D:\\VSCodePrograms\\Test-Time_Graph_Rebirth\\datamining\\data\\Cora\\processed\\data.pt",
+  "smoke_only": false
+}

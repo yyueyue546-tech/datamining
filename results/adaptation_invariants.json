@@ -1,0 +1,6 @@
+{
+  "label_independent_features": true,
+  "label_independent_edge_weights": true,
+  "gnn_parameters_unchanged": true,
+  "gnn_parameters_frozen": true
+}
