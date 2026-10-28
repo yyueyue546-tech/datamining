@@ -150,7 +150,7 @@ def main() -> None:
     erm = [accuracy(model, graph, mask) for graph, mask in zip(test_graphs, test_masks)]
     tt_greb = []
     adaptation = []
-    for graph in test_graphs:
+    for graph, mask in zip(test_graphs, test_masks):
         result = adapt_test_graph(model, graph, steps=args.adapt_steps)
         tt_greb.append(accuracy(model, result.graph, mask))
         adaptation.append({"steps": result.steps, "final_loss": result.final_loss})
