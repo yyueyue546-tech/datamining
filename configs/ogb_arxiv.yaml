@@ -1,0 +1,59 @@
+# GTrans OOD backbone pretraining reference. TT-GREB exact run configuration is unverified.
+# Only each backbone's model mapping is intended as constructor kwargs.
+dataset: ogb-arxiv
+dimensions:
+  in_channels: from_training_features
+  out_channels: from_training_label_encoding
+
+gcn:
+  model:
+    hidden_channels: 32
+    num_layers: 5
+    dropout: 0.0
+    batch_norm: true
+    normalize: true
+    add_self_loops: true
+  training:
+    learning_rate: 0.01
+    weight_decay: 0.0
+    optimizer: AdamW
+    max_epochs: 500
+    repeats: 10
+    validation_metric: accuracy
+    loss: cross_entropy
+
+graphsage:
+  model:
+    hidden_channels: 32
+    num_layers: 5
+    dropout: 0.0
+    batch_norm: true
+  training:
+    learning_rate: 0.01
+    weight_decay: 0.0
+    optimizer: AdamW
+    max_epochs: 500
+    repeats: 10
+    validation_metric: accuracy
+    loss: cross_entropy
+
+provenance:
+  gtrans:
+    dataset_overrides: "ChandlerBang/GTrans utils.py::reset_args (OOD mode)"
+    effective_constructor: "ChandlerBang/GTrans gtransform_feat.py::GraphAgent.pretrain_model"
+    batch_norm_cli_default: "ChandlerBang/GTrans train_both_all.py (--with_bn=1 for SAGE; GCN hardcodes true)"
+    convolution: "ChandlerBang/GTrans models/gcn.py::GCN and models/sage.py::SAGE"
+    optimizer_and_loss: "ChandlerBang/GTrans models/base_model.py::BaseModel.train_with_early_stopping and BaseModel.sup_loss"
+    validation_metric: "ChandlerBang/GTrans models/gcn.py::GCN.__init__ and models/sage.py::SAGE.__init__"
+  tt_greb:
+    repeats: "Section 4.1 reports ten runs with different seeds."
+    status: "待核实：Table 1 实际运行的超参数、邻接预处理与随机种子列表。"
+  eerm_reference:
+    source: "qitianwu/GraphOOD-EERM temp_arxiv/parse.py"
+    parser_learning_rate: 0.01
+    parser_weight_decay: 0.0
+    parser_max_epochs: 500
+  project:
+    dimensions: "Use the actual training graph and its label encoding. Paper table counts are not constructor defaults."
+    evaluation: "Select on the validation graph only. Test graphs are reserved for final evaluation."
+    compatibility: "GCN uses uncached PyG normalization. GraphSAGE uses native PyG mean aggregation for unweighted ERM."
