@@ -12,7 +12,6 @@ Cora split (1 train / 1 validation / 8 test graphs)
   -> TT-GREB on the same test graphs
   -> compare mean Accuracy
 ```
-
 The repository currently contains the standard Planetoid Cora raw files, not the
 paper's processed `1/1/8` split. Therefore `--smoke-standard-cora` is only a
 pipeline smoke test; it must not be reported as the paper result. For a paper
