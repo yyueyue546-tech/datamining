@@ -1,6 +1,49 @@
+﻿# 数据集
+data/
+data_new/
+data_backup_*.zip
+*_backup_*/
+
+# Python
 __pycache__/
-*.py[cod]
-.pytest_cache/
-data/processed/
-data/Cora/
+*.pyc
+
+# 备份
+*.bak
+*.bak_*
+*.bak[0-9]*
+*.bak_before_*
+*.bak_v*
+
+# 临时实验文件
+_doc_evidence/
+_smoke_logs/
+scripts/
+*.log
+patch_*.py
+fix_*.py
+fix*.py
+check_*.py
+diag_*.py
+debug_*.py
+scan_*.log
+run_*.log
+run_*.txt
+result_*.txt
+
+# IDE
+.vscode/
+.idea/
+Thumbs.db
+
+# 补充规则
+*_bak[0-9]*.py
+*_old_*.py
+*.ps1
 results/
+*_check_*.py
+
+# 运行输出
+cache_lang/
+logs/
+outputs/
