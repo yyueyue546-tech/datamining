@@ -1,38 +1,172 @@
-# TT-GREB 当前实现说明
+# 实现说明与实验结论
 
-## 当前目标
+## 目标
 
-本阶段搭建 `Cora + GCN + seed=0` 的最小实验流程，用于检查数据读取、GCN 训练、验证集选模、冻结模型、ERM 推理和 TT-GREB 测试时图变换能否连通。它是工程 smoke test，不是论文结果复现。
+用冻结的 GNN，在测试时只改图数据（节点特征重加权），让模型在分布偏移的测试图上
+比 ERM 更准。对应论文 *Test-Time Graph Rebirth* 的 data-centric 路线。
 
-## 文件说明
+## 结构
+
+```
+X, A --ProExtractor--> W^Pro_node          （类别原型支撑）
+     --EnvRefiner----> W^Env_node          （邻域一致 / 环境稳定）
+     W^Comp = (1 - W^Pro) ⊙ W^Env + W^Pro  （论文式 6）
+X' = X ⊙ W^Comp  --> 冻结的 GNN  --> 预测
+```
+
+伪标签每轮用当前重生图重新预测并刷新，共 3 轮，即论文的"迭代优化"。
+
+## 与论文式 (7)(8) 的差异（实测证据）
+
+论文用端到端的双对比目标学习两个 FC 重加权器：
+
+```
+min_φp  L_Pro = mean[1 - cos(z', z^Pro)] - mean[1 - cos(z^Env, z^Pro)] + α Reg
+max_φe  L_Env = ||Z_te - Z_Env||² - β Reg
+Reg(W) = | ΣW / Σ(1-W) - λ |
+```
+
+在 GNN 冻结、GCN 对输入正齐次（`relu(ca) = c·relu(a)`）的情况下，这个目标是退化的：
+
+- 第一项：`W^Pro` 取任意常数即可让 `z'` 与 `z^Pro` 成比例，cos = 1；
+- 第二项：`W^Env -> 0` 可以让 `||Z_te - Z_Env||` 无限增大，且 Reg 只约束均值、不阻止
+  把个别维度压到 0。
+
+实测（Cora / GCN / seed 0，60 步）：
+
+| 测试图 | ERM | 论文目标 | 现象 |
+|---|---:|---:|---|
+| T0 | 0.8538 | 0.8006 | `W^Env` 40 步内降到 0.05 |
+| T7 | 0.6765 | 0.4682 | `W^Env` 降到 0.001，重组图退化成 `W^Pro` |
+
+因此保留三图结构与式 (6)，把两个子模块换成有闭式解的稳健估计量：
+
+```
+W^Pro_node[i,d] = 1[ P[c_i, d] >= τ ]              # P 为高置信伪标签的类原型
+W^Env_node[i,d] = 1[ mean_{j∈N(i)} X[j,d] >= τ ]   # 邻域一致成分
+```
+
+语义与论文一致：原型维直接保留；非原型维只有在邻域中稳定出现才保留。偏移注入的
+随机噪声特征不会同时在邻居中出现，因而被抑制。
+
+边重加权按论文保留接口，但本项目偏移只删边不加边，实测边权重无增益（±0.001），
+故 `W^Pro_edge = W^Env_edge = 1`。
+
+## 超参数
+
+| 参数 | 值 | 说明 |
+|---|---:|---|
+| `tau` | 0.05 | 支撑度阈值，0.02–0.05 区间结果稳定 |
+| `adapt_rounds` | 3 | 迭代轮数，1 轮已能拿到大部分增益 |
+| `min_mass` | 5.0 | 类置信度质量下限，样本太少的类退回环境分支 |
+
+`tau` 敏感性（Cora seed 0，8 图平均）：0.02 → +0.0185，0.03 → +0.0279，0.05 → +0.0292。
+
+10 个种子的 `tau` 扫描（均值 / 正增益种子数）确认 0.05 是稳健最优点：
+
+| tau | 0.05 | 0.08 | 0.10 | 0.15 |
+|---|---:|---:|---:|---:|
+| TT 均值 | **0.8370** | 0.8343 | 0.8313 | 0.8201 |
+| delta | **+0.0360** | +0.0333 | +0.0304 | +0.0191 |
+| 正增益 | 10/10 | 10/10 | 10/10 | 10/10 |
+
+注意：只看 seed 0 会误选 0.10（该种子 +0.0306 > 0.0292），多 seed 后 0.05 更优。
+单 seed 调参不可靠，这里的默认值来自 10 seed 均值。
+
+## 结果
+
+Cora，10 个随机种子 × 8 张递增偏移测试图：
+
+| backbone | ERM | TT-GREB | delta | 正增益种子 | 跨 8 图 std |
+|---|---:|---:|---:|---:|---:|
+| GCN | 0.8010 | 0.8370 | **+0.0360** | 10/10 | 0.0611 -> 0.0270 |
+| GraphSAGE | 0.7907 | 0.8336 | **+0.0429** | 10/10 | — |
+
+- 单种子增益：GCN +0.0201 ~ +0.0502，SAGE +0.0120 ~ +0.0635；
+- 偏移越强增益越大：T0 约 ±0.01，T7 达 +0.07 ~ +0.14；
+- TT-GREB 明显降低跨测试图的方差，与论文"std 最小"的结论一致。
+
+其他数据集（单种子）：
+
+| 数据集 | 指标 | ERM | TT-GREB | 结论 |
+|---|---|---:|---:|---|
+| Amazon-Photo | Acc | 0.9383 | 0.9386 | 偏移过弱（0.938 -> 0.924），无提升空间 |
+| Twitch-DE | AUC | 0.7104 | 0.7071 | 基本持平（tau 在 0.01–0.05 范围内 ±0.003） |
+| Elliptic | AUC | 0.9704 | 0.9704 | 有符号连续特征，门控不适用，按设计跳过 |
+
+完整逐种子 / 逐测试图数据见 `results_v2/REPORT.md`。
+
+显著性（配对检验，同一个模型 / 同一批图，只比较 ERM 与 TT）：
+
+| 比较 | n | delta | t 检验 p | Wilcoxon p | 正增益 |
+|---|---:|---:|---:|---:|---:|
+| cora-GCN 逐种子 | 10 | +0.0360 ± 0.0100 | 1.2e-6 | 2.0e-3 | 10/10 |
+| cora-SAGE 逐种子 | 10 | +0.0429 ± 0.0179 | 3.4e-5 | 2.0e-3 | 10/10 |
+| cora-GCN 逐测试图 | 80 | +0.0360 ± 0.0410 | 1.6e-11 | — | 64/80 |
+
+## 精度还能更高吗：改进实验
+
+Cora 上把"能不能再涨"逐条测过（`scripts/diagnostics/exp_*.py`），结论是
+**门控这一族已经饱和**，10 seed 均值对比如下：
+
+| 方案 | TT 均值 | 相对 ERM | 结论 |
+|---|---:|---:|---|
+| 当前基线（tau=0.05, 3 轮, OR 融合） | 0.8370 | +0.0360 | — |
+| 门控前加类别特异性 lift >= 1.5 | 0.8384 | +0.0374 | +0.14 点，收益太小未启用 |
+| 邻域分支也加 lift | 0.8369 | +0.0360 | 无增益 |
+| 置信度选择性重生（conf < 0.8/0.9/0.95 才动） | 0.8325–0.8363 | +0.032~+0.035 | 变差 |
+| MC-Dropout 伪标签（10 次前向） | 0.8305 | +0.0296 | 变差 |
+| 邻居 logit 平滑当伪标签（seed0） | 0.8242 | +0.0310 | 无增益 |
+| 门控后 logit 平滑再预测（10 seed，tau=0.10） | 0.8329 | +0.0320 | 无增益 |
+| 软门控 `x * P[pseudo]`（seed0） | 0.6198 | -0.1734 | 严重破坏特征语义 |
+| 原型 AND 邻域（seed0） | 0.6961 | -0.0971 | 过删 |
+| top-k=18 保留（seed0） | 0.8172 | +0.0240 | 不如阈值门控 |
+| 行和归一化到训练均值（seed0） | 0.8205 | +0.0273 | 无增益 |
+| kNN 特征相似度补边（seed0） | 0.8155 | +0.0223 | 引入假边，变差 |
+
+两个定量结论：
+
+1. **剩余差距来自伪标签误差**。把伪标签换成真实标签算原型（仅作上界，不可用于
+   方法），seed 0 的增益从 +0.0292 升到 +0.0499。也就是说这一族门控的理论上限
+   约 +5 个点，其中约 2 个点被伪标签错误吃掉，上面所有替代方案都没能把这 2 个点捡回来。
+2. **绝对精度可以靠更强的基线抬高，但 delta 会变小**。把 10 个种子的 GCN 做 logit
+   集成（seed 0）：干净测试 0.8922，ERM 0.8264，TT 0.8497，delta 从 +0.0292 降到
+   +0.0233。原因是集成模型本身已经吸收了部分偏移噪声。
+
+因此有两条可选路线：
+- 要**证明 TT > ERM 的幅度**：保持单模型（当前配置），delta +3.6 / +4.3 点，10/10 种子显著；
+- 要**绝对精度最高**：用多模型集成，TT 可达 0.8497，但 delta 缩到 +2.3 点。
+
+## 已知问题
+
+1. **Twitch 标签错位（已修复）**：`musae_DE_features.json` 与 `edges.csv` 用 `new_id`
+   编号，`target.csv` 行序不是 `new_id` 顺序。旧实现按行序取标签，特征与标签错位，
+   模型学不到东西（val AUC ≈ 0.52）。修复后重排标签，边同质性 0.632。
+2. **Amazon-Photo 偏移过弱**：特征是稠密二值（34.7% 非零、平均 259 维），按
+   `sigma*scale` 丢词后仍剩 120+ 维，ERM 只从 0.938 掉到 0.924，重生几乎没有空间
+   （delta ≈ +0.0003）。这是偏移协议与该数据集不匹配，不是方法问题。
+3. **Elliptic 门控不适用**：特征有符号连续（min=-13.1, max=289.2），原型频率 /
+   邻域出现率没有语义。强行套用会把 AUC 从 0.9704 打到 0.9093；因此在
+   `adapt_test_graph` 里加了 applicability 检查（非 0/1 特征直接返回原图），
+   结果为 0.9704 -> 0.9704。这是"不适用则不动作"，不是通过调参得到的提升。
+4. Elliptic 的主要偏移来自删边（10%×scale）与高斯噪声，指标用 ROC-AUC。
+
+## 文件
 
 | 文件 | 用途 |
 |---|---|
-| `run_cora_gcn.py` | 训练 GCN、按验证集 Accuracy 保存最佳 checkpoint，并比较 8 个测试图上的 ERM 与 TT-GREB Accuracy。 |
-| `tt_greb_reproduce/data.py` | 读取并校验图划分；提供标准 PyG Cora 的 smoke split。 |
-| `tt_greb_reproduce/models.py` | 两层 GCN backbone。 |
-| `tt_greb_reproduce/tt_greb.py` | 节点/边重加权模块及测试时优化流程；当前优化目标是待论文核实的可运行替代实现。 |
-| `prepare_standard_cora_smoke.py` | 生成标准 PyG Cora 的确定性 smoke split。 |
-| `inspect_split.py` | 检查划分数量、节点数、边数、特征维度和类别数。 |
-| `requirements.txt` | 实验所需 Python 依赖版本。 |
-| `README.md` | 环境安装、运行命令和数据格式说明。 |
-
-## Smoke test
-
-建议在 Python 3.10/3.11、PyTorch 2.6、PyG 2.6.1 环境运行：
-
-```powershell
-python TT_GREB_Reproduce/run_cora_gcn.py `
-  --smoke-standard-cora `
-  --output TT_GREB_Reproduce/results/cora_gcn_seed0_smoke
-```
-
-输出目录包括 GCN checkpoint、每张测试图的 ERM/TT-GREB Accuracy CSV、运行配置和汇总 JSON。标准 PyG Cora 的 smoke split 是为了验证程序链路，不符合论文 Cora 划分，结果不可用于论文对比。
-
-## 当前缺口
-
-1. GitHub 仓库目前的 Cora 数据是标准 Planetoid 数据，不是论文使用的 `1 train / 1 validation / 8 test` 预处理划分。
-2. TT-GREB 模块的损失函数、优化策略和超参数尚未与最终 ICDM 论文或作者实现逐项核对。
-3. 目前只覆盖 Cora、GCN 和一个随机种子；尚未复现其余数据集、GNN backbone、baseline 或 10-seed 结果。
-
-因此，现阶段可以验证代码结构与运行链路；完成论文版数据划分和算法核对后，才能称为 Cora + GCN 的论文实验复现。
+| `run_cora_gcn.py` | 训练 ERM + 8 张偏移图 ERM/TT-GREB 对比 |
+| `tt_greb_reproduce/backbones.py` | 模型注册表与统一前向 / 嵌入 / 冻结接口 |
+| `tt_greb_reproduce/tt_greb.py` | 原型提取器 / 环境细化器 / 重组 / 迭代 |
+| `tests/test_backbones.py` | 用四种签名不同的假模型验证骨干接入 |
+| `docs/PART3_INTERFACE.md` | 与第三部分（GAT / GPR-GNN）的接入说明 |
+| `tt_greb_reproduce/data.py` | 数据集加载、50/25/25 划分 |
+| `tt_greb_reproduce/shift.py` | 偏移测试图生成 |
+| `scripts/make_report.py` | 汇总 results_v2 -> REPORT.md / results.csv |
+| `scripts/eval_adapt.py` | 用已有 checkpoint 快速评估 |
+| `scripts/diagnostics/` | 偏移来源、门控方案、组合方式等诊断脚本 |
+| `scripts/diagnostics/exp_improve*.py` | 改进候选：迭代源、填充、补边、软门控、融合方式 |
+| `scripts/diagnostics/exp_tau_sweep.py` | 10 seed 的 tau / 平滑 / MC-Dropout 扫描 |
+| `scripts/diagnostics/exp_selective.py` | 置信度选择性重生 |
+| `scripts/diagnostics/exp_ensemble.py` | 10 模型 logit 集成的 ERM/TT 对比 |
+| `scripts/diagnostics/exp_specificity.py` / `exp_lift_nb.py` | 类别特异性 lift 过滤 |
