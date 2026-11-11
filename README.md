@@ -2,7 +2,6 @@
 
 This directory contains the first reproducible experiment loop for **Test-Time
 Graph Rebirth (TT-GREB)**:
-
 ```text
 Cora split (1 train / 1 validation / 8 test graphs)
   -> train GCN
@@ -24,7 +23,6 @@ run, provide a `.pt` split file with this structure:
     "test": [torch_geometric.data.Data, ...],  # exactly 8 graphs for Cora
 }
 ```
-
 Each graph must have `x`, `edge_index`, and `y`. The loader checks graph indices,
 feature dimensions, class ranges, and the expected `1/1/8` count.
 
@@ -61,7 +59,6 @@ reproduction until the objective, optimizer schedule, and hyperparameters have
 been checked against the final ICDM paper or official implementation.
 
 ## Run the paper split
-
 ```powershell
 python TT_GREB_Reproduce/run_cora_gcn.py `
   --split TT_GREB_Reproduce/data/cora_1_1_8.pt `
@@ -73,7 +70,6 @@ must come from the authors' preprocessing or be generated from the exact split
 protocol before claiming a paper reproduction.
 
 For a local smoke artifact and its validation:
-
 ```powershell
 python TT_GREB_Reproduce/prepare_standard_cora_smoke.py `
   --output TT_GREB_Reproduce/data/cora_standard_smoke.pt
