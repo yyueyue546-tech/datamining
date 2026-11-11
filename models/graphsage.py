@@ -30,8 +30,18 @@ class WeightedSAGEConv(SAGEConv):
         return self.lin_l(torch.sparse.mm(neighbors, x)) + self.lin_r(x)
 
 
+from ._elliptic import load_elliptic
+
+
 class GraphSAGE(nn.Module):
     """Full-graph node classifier returning raw logits."""
+
+    @classmethod
+    def from_elliptic(cls, root, **model_options):
+        """Return a backbone and its splits, using options from elliptic.yaml."""
+        splits = load_elliptic(root)
+        model = cls(splits["train"][0].num_features, out_channels=2, **model_options)
+        return model, splits
 
     def __init__(
         self, in_channels: int, hidden_channels: int, out_channels: int,
